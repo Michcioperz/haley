@@ -3,7 +3,7 @@
 import socket, re, random, argparse
 from time import sleep
 
-HOST=CHAN=PORT=NAME=None
+HOST=CHAN=PORT=NAME=PRIV=None
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -11,29 +11,53 @@ def send(msg):
     for m in msg.split("\n"):
         print "<", m
         s.sendall("%s\r\n"%m)
-def say(msg):
+def say(chan, msg):
     for m in msg.split("\n"):
-        send("PRIVMSG %s :%s"%(CHAN, m))
+        send("PRIVMSG %s :%s"%(chan, m))
 
-def response(user, msg):
-    pass
+rules={}
+def add_rule(rgxp, resp):
+    rules[rgxp] = resp
+def load_rules(filename):
+    num, f = 1, open(filename)
+    for line in f:
+        if len(line.strip()) > 0 and line.strip()[0] != '#':
+            rgxp = re.match('^"(?P<rgxp>[^"]*)"\s*"(?P<resp>[^"]*)"$', line)
+            if rgxp:
+                add_rule(rgxp.group("rgxp"), rgxp.group("resp"))
+            else:
+                print "syntax error in", filename, "line", num
+        num += 1
 
-if __name__ == "__main__":
+def response(chan, user, msg):
+    for rgxp, resp in rules.iteritems():
+        m=re.match(rgxp, msg)
+        if m:
+            say(chan, resp)
+            return
+
+def main():
     parser = argparse.ArgumentParser(description="Simple irc bot")
     parser.add_argument("hostname", help="irc server address")
     parser.add_argument("channel", help="destination channel, leading '#' isn't required")
     parser.add_argument("-p", "--port", default=6667, metavar="port",
             help="port to use, default 6667")
-    parser.add_argument("-n", "--name", default="pbot", metavar="name",
-            help="bot's irc nickname. default pbot")
+    parser.add_argument("-n", "--name", default="fidgot", metavar="name",
+            help="bot's irc nickname. default fidgot")
+    parser.add_argument("-r", "--rules", default="~/.fidgot.rules", metavar="filename",
+            help="file with bot's responses")
+    parser.add_argument("--priv", action="store_true", 
+            help="enable provate messages parsing")
     args=vars(parser.parse_args())
 
     HOST=args["hostname"]
     PORT=args["port"]
     NAME=args["name"]
+    PRIV=args["priv"]
     CHAN=args["channel"]
     if CHAN[0] != '#':
         CHAN = '#'+CHAN
+    load_rules(args["rules"])
 
     s.connect((HOST, PORT))
     
@@ -59,4 +83,10 @@ if __name__ == "__main__":
                 send("join %s"%CHAN)
             elif re.match(":[^:]*PRIVMSG %s.*"%CHAN, msg):
                 rgxp = re.match(":(?P<nick>\w*)![^:]*:(?P<msg>.*)", msg)
-                response(rgxp.group("nick"), rgxp.group("msg"))
+                response(CHAN, rgxp.group("nick"), rgxp.group("msg"))
+            elif PRIV and re.match(":[^:]*PRIVMSG %s.*"%NAME, msg):
+                rgxp = re.match(":(?P<nick>\w*)[^:]*:(?P<msg>.*)", msg)
+                response(rgxp.group("nick"), rgxp.group("nick"), NAME+" "+rgxp.group("msg"))
+
+if __name__ == "__main__":
+    main()

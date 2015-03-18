@@ -1,0 +1,4 @@
+#example fidgot rules
+
+#simple regex matching
+"fidgot:{0,1} hi"         "hi"
