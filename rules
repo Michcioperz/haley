@@ -2,3 +2,12 @@
 
 #simple regex matching
 "fidgot:{0,1} hi"         "hi"
+
+#rules can be extended over many lines
+"fidgot help"  \
+"hello, i'm an irc bot \
+i can't do a lot yet, \
+but i'm learning"
+
+#to insert " use \" and \\ to insert \
+"fidgot:{0,1} \""         "\\"

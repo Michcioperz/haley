@@ -16,18 +16,34 @@ def say(chan, msg):
         send("PRIVMSG %s :%s"%(chan, m))
 
 rules={}
+sbst=[('\\\\', '\\'), ('\\"', '"')]
 def add_rule(rgxp, resp):
+    for (p, s) in sbst:
+        rgxp=rgxp.replace(p, s)
+        resp=resp.replace(p, s)
+    if rgxp[0] != '^':
+        rgxp = '^'+rgxp
+    if rgxp[-1] != '$':
+        rgxp += '$'
+    print 'new rule', rgxp, ' --- ', resp
     rules[rgxp] = resp
 def load_rules(filename):
-    num, f = 1, open(filename)
+    buf, num, f = "", 0, open(filename)
     for line in f:
-        if len(line.strip()) > 0 and line.strip()[0] != '#':
-            rgxp = re.match('^"(?P<rgxp>[^"]*)"\s*"(?P<resp>[^"]*)"$', line)
+        num += 1
+        line = buf+line.replace('\n', '')
+        if len(line) == 0:
+           continue
+        if line[-1] == '\\' and line[0] != '#':
+            buf = line[:-1]
+            continue
+        buf = ""
+        if line[0] != '#':
+            rgxp = re.match(r'^"(?P<rgxp>.*(\\\\)*[^\\]*)"\s*"(?P<resp>.*(\\\\)*[^\\]*)"$', line)
             if rgxp:
                 add_rule(rgxp.group("rgxp"), rgxp.group("resp"))
             else:
                 print "syntax error in", filename, "line", num
-        num += 1
 
 def response(chan, user, msg):
     for rgxp, resp in rules.iteritems():
