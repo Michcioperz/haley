@@ -1,6 +1,9 @@
 #example fidgot rules
+#Format: "regex" "message"
+#rules are checked from top, to down
+#the first, that matches is used
 
-#simple regex matching
+#python regular expressions, see 're' documentation
 "fidgot:{0,1} hi"         "hi"
 
 #rules can be extended over many lines
@@ -9,5 +12,9 @@
 i can't do a lot yet, \
 but i'm learning"
 
-#to insert " use \" and \\ to insert \
+#some characters (", \, <, >) are escaped with \
 "fidgot:{0,1} \""         "\\"
+
+#to insert group from regex put it's name into <>
+"fidgot:{0,1} say to (?P<nick>[^\s]*) (?P<msg>.*)" "<nick>: <msg>"
+"fidgot:{0,1} say (.*)"   "<1>"

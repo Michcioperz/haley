@@ -49,6 +49,17 @@ def response(chan, user, msg):
     for rgxp, resp in rules.iteritems():
         m=re.match(rgxp, msg)
         if m:
+            parts=re.split("(<\w+>)", resp)
+            for i in range(len(parts)):
+                if len(parts[i]) > 0 and parts[i][0] == '<':
+                    try:
+                        parts[i]=m.group(int(parts[i][1:-1]))
+                    except:
+                        try:
+                            parts[i]=m.group(parts[i][1:-1])
+                        except:
+                            parts[i]=""
+            resp="".join(parts)
             say(chan, resp)
             return
 
