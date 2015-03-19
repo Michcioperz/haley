@@ -43,8 +43,9 @@ def load_rules(filename):
             buf = line[:-1]
             continue
         buf = ""
+        line=line.strip()
         if line[0] == '\"':
-            rgxp = re.match(r'^"(?P<rgxp>.*[^\\](\\\\)*)"\s*"(?P<resp>.*[^\\]*(\\\\)*)"$', line)
+            rgxp = re.match(r'^"(?P<rgxp>.*[^\\](\\\\)*)"\s*"(?P<resp>.*)"\s*$', line)
             if rgxp:
                 add_rule(rgxp.group("rgxp"), rgxp.group("resp"))
             else:
@@ -80,7 +81,7 @@ def response(chan, user, msg):
         rgxp=substitute(process(rgxp))
         m=re.match(rgxp, msg)
         if m:
-            parts=re.split(r"([^\\](\\\\)*)(<[^>]+>)", resp)
+            parts=re.split(r"([^\\](\\\\)*)(<[^>]+>)", ' '+resp)
             for i in range(len(parts)):
                 if parts[i] == None:
                     parts[i]=""
@@ -95,7 +96,7 @@ def response(chan, user, msg):
                             parts[i]=""
             resp=substitute(process("".join(parts)))
             if len(resp)>0:
-                say(chan, resp)
+                say(chan, resp[1:])
             return
 
 def main():
