@@ -16,15 +16,14 @@ def say(chan, msg):
         send("PRIVMSG %s :%s"%(chan, m))
 
 rules={}
-sbst=[('\\\\', '\\'), ('\\"', '"')]
+sbst=[('\\\\', '\\'), ('\\"', '"'), ('\\<', '<'), ('\\>', '>')]
 def add_rule(rgxp, resp):
-    for (p, s) in sbst:
-        rgxp=rgxp.replace(p, s)
-        resp=resp.replace(p, s)
     if rgxp[0] != '^':
         rgxp = '^'+rgxp
     if rgxp[-1] != '$':
         rgxp += '$'
+    for (r, p) in sbst:
+        rgxp=rgxp.replace(r, p)
     print 'new rule', rgxp, ' --- ', resp
     rules[rgxp] = resp
 def load_rules(filename):
@@ -39,7 +38,7 @@ def load_rules(filename):
             continue
         buf = ""
         if line[0] != '#':
-            rgxp = re.match(r'^"(?P<rgxp>.*(\\\\)*[^\\]*)"\s*"(?P<resp>.*(\\\\)*[^\\]*)"$', line)
+            rgxp = re.match(r'^"(?P<rgxp>.*[^\\](\\\\)*)"\s*"(?P<resp>.*[^\\]*(\\\\)*)"$', line)
             if rgxp:
                 add_rule(rgxp.group("rgxp"), rgxp.group("resp"))
             else:
@@ -49,9 +48,11 @@ def response(chan, user, msg):
     for rgxp, resp in rules.iteritems():
         m=re.match(rgxp, msg)
         if m:
-            parts=re.split("(<\w+>)", resp)
+            parts=re.split(r"([^\\](\\\\)*)(<\w+>)", resp)
             for i in range(len(parts)):
-                if len(parts[i]) > 0 and parts[i][0] == '<':
+                if parts[i] == None:
+                    parts[i]=""
+                elif len(parts[i]) > 0 and parts[i][0] == '<' and parts[i][-1] == '<':
                     try:
                         parts[i]=m.group(int(parts[i][1:-1]))
                     except:
@@ -60,6 +61,8 @@ def response(chan, user, msg):
                         except:
                             parts[i]=""
             resp="".join(parts)
+            for (p, s) in sbst:
+                resp=resp.replace(p, s)
             say(chan, resp)
             return
 

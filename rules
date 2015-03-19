@@ -7,13 +7,15 @@
 "fidgot:{0,1} hi"         "hi"
 
 #rules can be extended over many lines
-"fidgot help"  \
+"fidgot:{0,1} help"  \
 "hello, i'm an irc bot \
 i can't do a lot yet, \
 but i'm learning"
 
-#some characters (", \, <, >) are escaped with \
-"fidgot:{0,1} \""         "\\"
+#some characters (", \, <, >) can be escaped with \
+#\ -> \, \\ -> \, \\\\ -> \\
+"fidgot:{0,1} \\\\"         "backslash"
+"fidgot wow (.*)" "\<\\<1>\\\> "
 
 #to insert group from regex put it's name into <>
 "fidgot:{0,1} say to (?P<nick>[^\s]*) (?P<msg>.*)" "<nick>: <msg>"
