@@ -16,8 +16,15 @@ def say(chan, msg):
         send("PRIVMSG %s :%s"%(chan, m))
 
 rules={}
-sbst=[('\\\\', '\\'), ('\\"', '"'), ('\\<', '<'), ('\\>', '>'), ('\\(', '('), ('\\)', ')')]
 variables={}
+sbst=[('\\\\', '\\'), ('\\"', '"'), ('\\<', '<'), 
+        ('\\>', '>'), ('\\(', '('), ('\\)', ')'),
+        ('\\$', '$')]
+def substitute(s):
+    for (r, p) in sbst:
+        s=s.replace(r, p)
+    return s
+
 def add_rule(rgxp, resp):
     if rgxp[0] != '^':
         rgxp = '^'+rgxp
@@ -36,21 +43,30 @@ def load_rules(filename):
             buf = line[:-1]
             continue
         buf = ""
-        if line[0] != '#':
+        if line[0] == '\"':
             rgxp = re.match(r'^"(?P<rgxp>.*[^\\](\\\\)*)"\s*"(?P<resp>.*[^\\]*(\\\\)*)"$', line)
             if rgxp:
                 add_rule(rgxp.group("rgxp"), rgxp.group("resp"))
             else:
                 print "syntax error in", filename, "line", num
+        elif line[0] == "$":
+            rgxp = re.match(r'^\$(?P<name>\w+)\s*=\s*"(?P<value>.*)"$', line)
+            if rgxp:
+                value=substitute(process(rgxp.group('value')))
+                variables[rgxp.group('name')]=value
+                print 'new value $%s = %s'%(rgxp.group('name'), value)
+            else:
+                print "syntax error in", filename, "line", num
+
 def process(msg):
-    parts=re.split(r'(\$\w+)([^\w\(]|$)', msg)
+    parts=re.split(r'([^\\](\\\\)*)(\$\w+)([^\w\(]|$)', ' '+msg)
     for i in range(len(parts)):
         if parts[i] == None:
             parts[i]=""
         if re.match(r'\$\w+$', parts[i]):
             parts[i]=var(parts[i][1:])
     msg = "".join(parts)
-    return msg
+    return msg[1:]
 
 def var(name):
     if name not in variables.keys():
@@ -61,15 +77,7 @@ def response(chan, user, msg):
     variables['user']=user
     variables['chan']=chan
     for rgxp, resp in rules.iteritems():
-        parts=re.split(r"([^\\](\\\\)*)(<\s*\$.*>)", rgxp)
-        for i in range(len(parts)):
-            if parts[i] == None:
-                parts[i]=""
-            elif len(parts[i])>3 and parts[i][0] == '<' and parts[i][-1] == '>':
-                parts[i]=process(parts[i][1:-1])
-        rgxp="".join(parts)
-        for (r, p) in sbst:
-            rgxp=rgxp.replace(r, p)
+        rgxp=substitute(process(rgxp))
         m=re.match(rgxp, msg)
         if m:
             parts=re.split(r"([^\\](\\\\)*)(<[^>]+>)", resp)
@@ -78,19 +86,14 @@ def response(chan, user, msg):
                     parts[i]=""
                 elif len(parts[i]) >= 3 and parts[i][0] == '<' and parts[i][-1] == '>':
                     expr=parts[i][1:-1].strip()
-                    if expr[0] == '$':
-                        parts[i] = process(expr)
-                    else:
+                    try:
+                        parts[i]=m.group(int(expr))
+                    except:
                         try:
-                            parts[i]=m.group(int(expr))
+                            parts[i]=m.group(expr)
                         except:
-                            try:
-                                parts[i]=m.group(expr)
-                            except:
-                                parts[i]=""
-            resp="".join(parts)
-            for (p, s) in sbst:
-                resp=resp.replace(p, s)
+                            parts[i]=""
+            resp=substitute(process("".join(parts)))
             if len(resp)>0:
                 say(chan, resp)
             return
@@ -111,14 +114,12 @@ def main():
 
     HOST=args["hostname"]
     PORT=args["port"]
-    NAME=args["name"]
+    variables['name']=NAME=args["name"]
     PRIV=args["priv"]
     CHAN=args["channel"]
     if CHAN[0] != '#':
         CHAN = '#'+CHAN
     load_rules(args["rules"])
-
-    variables['name']=NAME
 
     s.connect((HOST, PORT))
     
