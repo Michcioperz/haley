@@ -52,7 +52,7 @@ def response(chan, user, msg):
             for i in range(len(parts)):
                 if parts[i] == None:
                     parts[i]=""
-                elif len(parts[i]) > 0 and parts[i][0] == '<' and parts[i][-1] == '<':
+                elif len(parts[i]) > 0 and parts[i][0] == '<' and parts[i][-1] == '>':
                     try:
                         parts[i]=m.group(int(parts[i][1:-1]))
                     except:
