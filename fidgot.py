@@ -15,7 +15,7 @@ def say(chan, msg):
     for m in msg.split("\n"):
         send("PRIVMSG %s :%s"%(chan, m))
 
-rules={}
+rules=[]
 variables={}
 sbst=[('\\\\', '\\'), ('\\"', '"'), ('\\<', '<'), 
         ('\\>', '>'), ('\\(', '('), ('\\)', ')'),
@@ -24,14 +24,30 @@ def substitute(s):
     for (r, p) in sbst:
         s=s.replace(r, p)
     return s
+def escape(s):
+    for (r, p) in sbst:
+        s=s.replace(p, r)
+    return s
 
-def add_rule(rgxp, resp):
+class Rule:
+    def __init__(self, rgxp, resp, flags):
+        self.rgxp, self.resp, self.flags = rgxp,resp, flags
+    def flag(self, flag):
+        for x in flag:
+            if self.flags.find(x) == -1:
+                return False
+        return True
+
+def add_rule(rgxp, resp, flags):
     if rgxp[0] != '^':
         rgxp = '^'+rgxp
     if rgxp[-1] != '$':
         rgxp += '$'
-    print 'new rule', rgxp, ' --- ', resp
-    rules[rgxp] = resp
+    print 'new rule', rgxp, ' -- ', flags, ' -- ', resp
+    rules.append(Rule(rgxp, resp, flags))
+def set_var(name, value):
+    variables[name]=value
+    print 'new value $%s = %s'%(name, value)
 def load_rules(filename):
     buf, num, f = "", 0, open(filename)
     for line in f:
@@ -44,20 +60,16 @@ def load_rules(filename):
             continue
         buf = ""
         line=line.strip()
-        if line[0] == '\"':
-            rgxp = re.match(r'^"(?P<rgxp>.*[^\\](\\\\)*)"\s*"(?P<resp>.*)"\s*$', line)
-            if rgxp:
-                add_rule(rgxp.group("rgxp"), rgxp.group("resp"))
-            else:
-                print "syntax error in", filename, "line", num
-        elif line[0] == "$":
-            rgxp = re.match(r'^\$(?P<name>\w+)\s*=\s*"(?P<value>.*)"$', line)
-            if rgxp:
-                value=substitute(process(rgxp.group('value')))
-                variables[rgxp.group('name')]=value
-                print 'new value $%s = %s'%(rgxp.group('name'), value)
-            else:
-                print "syntax error in", filename, "line", num
+        rgxp = re.match(r'^(?P<flags>\w*)"(?P<rgxp>.*[^\\](\\\\)*)"\s*"(?P<resp>.*)"\s*$', line)
+        if rgxp:
+            add_rule(rgxp.group("rgxp"), rgxp.group("resp"), rgxp.group("flags"))
+            continue
+        rgxp = re.match(r'^\$(?P<name>\w+)\s*=\s*"(?P<value>.*)"$', line)
+        if rgxp:
+            set_var(rgxp.group('name'), substitute(process(rgxp.group('value'))))
+            continue
+        if line[0] != '#' and re.match(r'^\s*$', line) == None:
+            print "syntax error in", filename, "line", num
 
 def process(msg):
     parts=re.split(r'([^\\](\\\\)*)(\$\w+)([^\w\(]|$)', ' '+msg)
@@ -74,14 +86,18 @@ def var(name):
         return "NOVAR"
     return variables[name]
 
-def response(chan, user, msg):
+def response(chan, user, rawmsg):
     variables['user']=user
     variables['chan']=chan
-    for rgxp, resp in rules.iteritems():
-        rgxp=substitute(process(rgxp))
-        m=re.match(rgxp, msg)
+    escmsg=escape(rawmsg)
+    for rule in rules:
+        rgxp=substitute(process(rule.rgxp))
+        if rule.flag('r'):
+            m=re.match(rgxp, rawmsg)
+        else:
+            m=re.match(rgxp, escmsg)
         if m:
-            parts=re.split(r"([^\\](\\\\)*)(<[^>]+>)", ' '+resp)
+            parts=re.split(r"([^\\](\\\\)*)(<[^>]+>)", ' '+rule.resp)
             for i in range(len(parts)):
                 if parts[i] == None:
                     parts[i]=""

@@ -17,6 +17,11 @@ $sname  = "$name:{0,1}"
 "$sname say to (?P<nick>[^\s]*) (?P<msg>.*)" "<nick>: <msg>"
 "$sname say (.*)"   "<1>"
 
+#to specify a flag put it right before regex
+#r - do not escape msg
+#try 'do $name', 'do \$name', and 'say $name'
+r"$sname do (.*)" "<1>"
+
 #predefined variables: $name, $chan, $user
 "$sname info" "i'am $name, and you are $user. We are on $chan."
 
