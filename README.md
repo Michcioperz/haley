@@ -48,5 +48,5 @@ To use function put it's name inside a rule with leading $.
     "!foo3"             "$nop(output of nop - $nop(foo))"
     
 ###availible functions:
-- nop
+- nop 
     does nothing, returns it's input
