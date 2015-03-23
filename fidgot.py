@@ -3,10 +3,12 @@
 import socket, re, random, argparse
 from time import sleep
 
+#global variables from command line arguments
 HOST=CHAN=PORT=NAME=PRIV=None
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+#communication with IRC server
 def send(msg):
     for m in msg.split("\n"):
         print "<", m
@@ -15,15 +17,20 @@ def say(chan, msg):
     for m in msg.split("\n"):
         send("PRIVMSG %s :%s"%(chan, m))
 
+#some core functions
 def nop(line):
     return line
+    
 
+#global variables, all rules, variables and functions
 rules=[]
 variables={}
 functions={"nop" : nop}
+
+#these signs can be escaped
 sbst=[('\\\\', '\\'), ('\\"', '"'), ('\\<', '<'), 
         ('\\>', '>'), ('\\(', '('), ('\\)', ')'),
-        ('\\$', '$')]
+        ('\\$', '$'), ('\\,', ',')]
 def substitute(s):
     for (r, p) in sbst:
         s=s.replace(r, p)
@@ -42,6 +49,7 @@ class Rule:
                 return False
         return True
 
+#add a new rule, do some processing and log it
 def add_rule(rgxp, resp, flags):
     if rgxp[0] != '^':
         rgxp = '^'+rgxp
@@ -49,9 +57,13 @@ def add_rule(rgxp, resp, flags):
         rgxp += '$'
     print 'new rule', rgxp, ' -- ', flags, ' -- ', resp
     rules.append(Rule(rgxp, resp, flags))
+
+#set variable 
 def set_var(name, value):
     variables[name]=value
     print 'new value $%s = %s'%(name, value)
+
+#load everything from filename
 def load_rules(filename):
     buf, num, f = "", 0, open(filename)
     for line in f:
@@ -64,24 +76,33 @@ def load_rules(filename):
             continue
         buf = ""
         line=line.strip()
+
+        #rule's regex
         rgxp = re.match(r'^(?P<flags>\w*)"(?P<rgxp>.*[^\\](\\\\)*)"\s*"(?P<resp>.*)"\s*$', line)
         if rgxp:
             add_rule(rgxp.group("rgxp"), rgxp.group("resp"), rgxp.group("flags"))
             continue
+
+        #variable regex
         rgxp = re.match(r'^\$(?P<name>\w+)\s*=\s*"(?P<value>.*)"$', line)
         if rgxp:
             set_var(rgxp.group('name'), substitute(process(rgxp.group('value'))))
             continue
+
         if line[0] != '#' and re.match(r'^\s*$', line) == None:
             print "syntax error in", filename, "line", num
 
+#evaluate rule, this thing should be improved (some lists are calculated many times)
 def process(msg):
+
+    #find if a char is escaped or not
     prev, escaped = None, [False for i in range(len(msg)+1)]
     for i in range(len(msg)):
         if prev == '\\' and not escaped[i-1]:
             escaped[i] = True
         prev = msg[i]
 
+    #the closest opening bracket on left
     next_bracket = [-1 for i in range(len(msg)+1)]
     for i in range(len(msg))[::-1]:
         if not escaped[i] and msg[i] == '(':
@@ -89,6 +110,7 @@ def process(msg):
         else:
             next_bracket[i] = next_bracket[i+1]
 
+    #second bracket to pair
     depth, first, pair = 0, [0 for i in range(len(msg)+1)], [-1 for i in range(len(msg)+1)]
     for i in range(len(msg)):
         if not escaped[i]:
@@ -108,12 +130,14 @@ def process(msg):
             else:
                 keyword = False
                 if name in variables.keys():
+                    #insert variable
                     ret += var(name) + msg[i]
                 elif name in functions.keys():
+                    #call recursively and pass output to function
                     ret += foo(name, process(msg[next_bracket[i]+1:pair[next_bracket[i]]]))
                     i = pair[next_bracket[i]]
         else:
-            if msg[i] == '$' and not escaped[i]:
+            if msg[i] == '$' and not escaped[i] and i != len(msg)-1:
                 keyword = True
                 name=""
             else:
@@ -121,6 +145,7 @@ def process(msg):
         i += 1
     return ret
 
+#get variable, call a function
 def var(name):
     if name not in variables.keys():
         return "NOVAR"

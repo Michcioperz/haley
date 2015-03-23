@@ -1,35 +1,10 @@
-#example fidgot rules
-#Format: "regex" "message"
-#rules are checked from top, to down
-#the first, that matches is used
+#example fidgot's rules file
 
-#defining vatiable:
+#useful, user can write "name", or "name:"
 $sname  = "$name:{0,1}"
 
-#python regular expressions, see 're' module documentation
-"$sname hi"         "hi"
-
-#some characters (", \, <, >, (, ), $ ) can be escaped with \
-#\ -> \, \\ -> \, \\\\ -> \\
-"$sname \\\\"         "backslash"
-
-#to insert group from regex put it's name into <>
-"$sname say to (?P<nick>[^\s]*) (?P<msg>.*)" "<nick>: <msg>"
-"$sname say (.*)"   "<1>"
-
-#to specify a flag put it right before regex
-#r - do not escape msg
-#try 'do $name', 'do \$name', and 'say $name'
-r"$sname do (.*)" "<1>"
-
-#predefined variables: $name, $chan, $user
-"$sname info" "i'am $name, and you are $user. We are on $chan."
-
-#rules can be extended over many lines
-"$sname help"  \
-"hello, i'm $name an irc bot \
-i can't do a lot yet, \
-but i'm learning"
-
-#functions:, $nop does nothing
-"$sname foo"  "wow $nop(wow $nop(you entered 'foo'))"
+"$sname hi"                 "hi"
+"$sname say (.*) to me"     "$user: <1>"
+"$sname say (.*) to (.*)"   "<2>: <1>"
+"$sname say (.*)"           "<1>"
+"$sname.*"                  "$user: i don't understand you :("
