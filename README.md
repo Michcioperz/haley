@@ -11,10 +11,12 @@ Rule is a pair of regular expression and response, when fidgot receives a messag
 Fidgot uses python [re](https://docs.python.org/2/library/re.html "re") regular expression module, so you can use all it features in rules.
     
 To insert a group put it's name inside <...>, for example:
+
     "!say (.*)"         "<1>"
     "!say (?P<msg>.*)"  "<msg>"
 
 To use a flag in this rule put it just before regular expression:
+
     r"!do (.)"          "<1>"
 current flags:
 - r  
@@ -22,9 +24,11 @@ current flags:
     
 #variables
 To define a variable put in into a rules file:
+
     $var    = "variable"
     
 To use it in rule simple put it's name with $ inside a rule, you can use it both in regular expression or response.
+
     "!var"              "$var"
 
 Some predefined variables, that you can use every time is:
@@ -36,6 +40,7 @@ In fact, variable body is evaluated in moment it's assigned, so you can use vari
 
 #functions
 To use function put it's name inside a rule with leading $.
+
     "!foo"              "$nop(foo)"
     "!foo2"             "$nop($nop(foo))"
     "!foo3"             "$nop(output of nop - $nop(foo))"
