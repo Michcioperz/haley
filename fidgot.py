@@ -15,8 +15,12 @@ def say(chan, msg):
     for m in msg.split("\n"):
         send("PRIVMSG %s :%s"%(chan, m))
 
+def nop(line):
+    return line
+
 rules=[]
 variables={}
+functions={"nop" : nop}
 sbst=[('\\\\', '\\'), ('\\"', '"'), ('\\<', '<'), 
         ('\\>', '>'), ('\\(', '('), ('\\)', ')'),
         ('\\$', '$')]
@@ -72,19 +76,59 @@ def load_rules(filename):
             print "syntax error in", filename, "line", num
 
 def process(msg):
-    parts=re.split(r'([^\\](\\\\)*)(\$\w+)([^\w\(]|$)', ' '+msg)
-    for i in range(len(parts)):
-        if parts[i] == None:
-            parts[i]=""
-        if re.match(r'\$\w+$', parts[i]):
-            parts[i]=var(parts[i][1:])
-    msg = "".join(parts)
-    return msg[1:]
+    prev, escaped = None, [False for i in range(len(msg)+1)]
+    for i in range(len(msg)):
+        if prev == '\\' and not escaped[i-1]:
+            escaped[i] = True
+        prev = msg[i]
+
+    next_bracket = [-1 for i in range(len(msg)+1)]
+    for i in range(len(msg))[::-1]:
+        if not escaped[i] and msg[i] == '(':
+            next_bracket[i] = i
+        else:
+            next_bracket[i] = next_bracket[i+1]
+
+    depth, first, pair = 0, [0 for i in range(len(msg)+1)], [-1 for i in range(len(msg)+1)]
+    for i in range(len(msg)):
+        if not escaped[i]:
+            if msg[i] == '(':
+                depth += 1
+                first[depth] = i
+            elif msg[i] == ')':
+                pair[first[depth]] = i
+                pair[i] = first[depth]
+                depth -= 1
+
+    i, keyword, name, ret = 0, False, "", ""
+    while i < len(msg):
+        if keyword:
+            if re.match(r'^\w$', msg[i]):
+                name += msg[i]
+            else:
+                keyword = False
+                if name in variables.keys():
+                    ret += var(name) + msg[i]
+                elif name in functions.keys():
+                    ret += foo(name, process(msg[next_bracket[i]+1:pair[next_bracket[i]]]))
+                    i = pair[next_bracket[i]]
+        else:
+            if msg[i] == '$' and not escaped[i]:
+                keyword = True
+                name=""
+            else:
+                ret += msg[i]
+        i += 1
+    return ret
 
 def var(name):
     if name not in variables.keys():
         return "NOVAR"
     return variables[name]
+def foo(name, args):
+    if name not in functions:
+        return "NOFUN"
+    return functions[name](args)
 
 def response(chan, user, rawmsg):
     variables['user']=user
@@ -130,7 +174,7 @@ def main():
     args=vars(parser.parse_args())
 
     HOST=args["hostname"]
-    PORT=args["port"]
+    PORT=int(args["port"])
     variables['name']=NAME=args["name"]
     PRIV=args["priv"]
     CHAN=args["channel"]
@@ -150,22 +194,24 @@ def main():
             buf = buf[buf.find("\n")+1:]
             print ">", msg
 
-            if re.search("Checking Ident", msg, re.IGNORECASE):
+            if re.search(r"Checking Ident", msg, re.IGNORECASE):
                send("user %s %s s: %s\nnick %s"%(
                    NAME, NAME, NAME, NAME))
-            elif re.search("Nickname is already in use", msg, re.IGNORECASE):
+            elif re.search(r"Nickname is already in use", msg, re.IGNORECASE):
                 NAME += "_"
                 send("nick %s"%NAME)
-            elif re.match("PING.*", msg, re.IGNORECASE):
+            elif re.match(r"PING.*", msg, re.IGNORECASE):
                 send("PONG%s"%re.search("PING(?P<ping>.*)", msg, re.IGNORECASE).group("ping"))
-            elif re.match(":[^:]*001 %s :.*"%NAME, msg):
+            elif re.match(r":[^:]*001 %s :.*"%NAME, msg):
                 send("join %s"%CHAN)
-            elif re.match(":[^:]*PRIVMSG %s.*"%CHAN, msg):
-                rgxp = re.match(":(?P<nick>\w*)![^:]*:(?P<msg>.*)", msg)
-                response(CHAN, rgxp.group("nick"), rgxp.group("msg"))
-            elif PRIV and re.match(":[^:]*PRIVMSG %s.*"%NAME, msg):
-                rgxp = re.match(":(?P<nick>\w*)[^:]*:(?P<msg>.*)", msg)
-                response(rgxp.group("nick"), rgxp.group("nick"), NAME+" "+rgxp.group("msg"))
+            elif re.match(r":[^\s]* PRIVMSG %s.*"%CHAN, msg):
+                rgxp = re.match(r":(?P<nick>[^\s!]*)(![^\s]*)* PRIVMSG %s :(?P<msg>.*)$"%CHAN, msg)
+                if rgxp:
+                    response(CHAN, rgxp.group("nick"), rgxp.group("msg"))
+            elif PRIV and re.match(r":[^\s]* PRIVMSG %s.*"%NAME, msg):
+                rgxp = re.match(r":(?P<nick>[^\s!]*)(![^\s]*)* PRIVMSG %s :(?P<msg>.*)$"%NAME, msg)
+                if rgxp:
+                    response(rgxp.group("nick"), rgxp.group("nick"), NAME+" "+rgxp.group("msg"))
 
 if __name__ == "__main__":
     main()

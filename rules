@@ -30,3 +30,6 @@ r"$sname do (.*)" "<1>"
 "hello, i'm $name an irc bot \
 i can't do a lot yet, \
 but i'm learning"
+
+#functions:, $nop does nothing
+"$sname foo"  "wow $nop(wow $nop(you entered 'foo'))"
