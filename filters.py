@@ -2,15 +2,14 @@ haley.bff = "Michcioperz"
 
 @haley.register_filter()
 def goodbye(self, message, friend):
-    if friend == self.bff:
-        if self.nickname in message and "could you quit" in message.lower() and "please" in message.lower():
+    if self.nickname in message and "could you quit" in message.lower() and "please" in message.lower():
+        if friend == self.bff:
             self.say(self.channel, "Okay, %s, see you later!" % friend)
             self.send("QUIT")
             import sys
             sys.exit()
-            return True
-    else:
-        self.say(self.channel, "%s, it's not like you're %s, right? :D" % (friend, self.bff))
+        else:
+            self.say(self.channel, "%s, it's not like you're %s, right? :D" % (friend, self.bff))
         return True
     return False
 
