@@ -29,14 +29,18 @@ def new_rule(line):
     return "i can't add such rule"
 def list_rules(line):
     ret = ""
-    for rule in rules:
-        ret += "%s%-40s - %s\n"%(rule.flags, '"' + rule.rgxp + '"', '"' + rule.resp + '"')
+    for i in range(len(rules)):
+        ret += "%-4d%s%-40s - %s\n"%(i, rules[i].flags, '"' + rules[i].rgxp + '"', '"' + rules[i].resp + '"')
     return ret
+def del_rule(line):
+    del rules[int(line)]
+    return "done"
 
 #global variables, all rules, variables and functions
 rules=[]
 variables={}
-functions={"nop" : nop, "add_rule" : new_rule, "list_rules" : list_rules}
+functions={"nop" : nop, "add_rule" : new_rule, "list_rules" : list_rules,
+        "del_rule" : del_rule}
 
 #these signs can be escaped
 sbst=[('\\\\', '\\'), ('\\"', '"'), ('\\<', '<'), 

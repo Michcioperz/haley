@@ -5,6 +5,7 @@ $sname  = "$name:{0,1}"
 
 "$sname add (.*)"           "$add_rule(<1>)"
 "$sname list"               "$list_rules()"
+"$sname del ([0-9]*)"       "$del_rule(<1>)"
 
 "$sname hi"                 "hi"
 "$sname say (.*) to me"     "$user: <1>"

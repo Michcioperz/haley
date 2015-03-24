@@ -50,3 +50,4 @@ To use function put it's name inside a rule with leading $.
 - nop         does nothing, returns it's input
 - add\_rule   adds new rule, same syntax as in rules file
 - list\_rules list all rules
+- del\_rule   delete rule
