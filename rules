@@ -3,6 +3,9 @@
 #useful, user can write "name", or "name:"
 $sname  = "$name:{0,1}"
 
+"$sname add (.*)"           "$add_rule(<1>)"
+"$sname list"               "$list_rules()"
+
 "$sname hi"                 "hi"
 "$sname say (.*) to me"     "$user: <1>"
 "$sname say (.*) to (.*)"   "<2>: <1>"

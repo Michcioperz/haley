@@ -21,8 +21,7 @@ To use a flag in this rule put it just before regular expression:
 
     r"!do (.)"          "<1>"
 current flags:
-- r  
-    do not escape characters in message from user
+- r     do not escape characters in message from user
     
 ##variables
 To define a variable put in into a rules file:
@@ -48,5 +47,6 @@ To use function put it's name inside a rule with leading $.
     "!foo3"             "$nop(output of nop - $nop(foo))"
     
 ###availible functions:
-- nop 
-    does nothing, returns it's input
+- nop         does nothing, returns it's input
+- add\_rule   adds new rule, same syntax as in rules file
+- list\_rules list all rules

@@ -20,12 +20,23 @@ def say(chan, msg):
 #some core functions
 def nop(line):
     return line
-    
+def new_rule(line):
+    line = substitute(line)
+    rgxp = re.match(r'^(?P<flags>\w*)"(?P<rgxp>.*[^\\](\\\\)*)"\s*"(?P<resp>.*)"\s*$', line)
+    if rgxp:
+        add_rule(rgxp.group("rgxp"), rgxp.group("resp"), rgxp.group("flags"), False)
+        return "done"
+    return "i can't add such rule"
+def list_rules(line):
+    ret = ""
+    for rule in rules:
+        ret += "%s%-40s - %s\n"%(rule.flags, '"' + rule.rgxp + '"', '"' + rule.resp + '"')
+    return ret
 
 #global variables, all rules, variables and functions
 rules=[]
 variables={}
-functions={"nop" : nop}
+functions={"nop" : nop, "add_rule" : new_rule, "list_rules" : list_rules}
 
 #these signs can be escaped
 sbst=[('\\\\', '\\'), ('\\"', '"'), ('\\<', '<'), 
@@ -50,13 +61,16 @@ class Rule:
         return True
 
 #add a new rule, do some processing and log it
-def add_rule(rgxp, resp, flags):
+def add_rule(rgxp, resp, flags, end=True):
     if rgxp[0] != '^':
         rgxp = '^'+rgxp
     if rgxp[-1] != '$':
         rgxp += '$'
     print 'new rule', rgxp, ' -- ', flags, ' -- ', resp
-    rules.append(Rule(rgxp, resp, flags))
+    if end:
+        rules.append(Rule(rgxp, resp, flags))
+    else:
+        rules.insert(0, Rule(rgxp, resp, flags))
 
 #set variable 
 def set_var(name, value):
@@ -94,7 +108,6 @@ def load_rules(filename):
 
 #evaluate rule, this thing should be improved (some lists are calculated many times)
 def process(msg):
-
     #find if a char is escaped or not
     prev, escaped = None, [False for i in range(len(msg)+1)]
     for i in range(len(msg)):
@@ -125,7 +138,7 @@ def process(msg):
     i, keyword, name, ret = 0, False, "", ""
     while i < len(msg):
         if keyword:
-            if re.match(r'^\w$', msg[i]):
+            if re.match(r'^[a-zA-Z0-9_]$', msg[i]):
                 name += msg[i]
             else:
                 keyword = False
@@ -229,11 +242,11 @@ def main():
                 send("PONG%s"%re.search("PING(?P<ping>.*)", msg, re.IGNORECASE).group("ping"))
             elif re.match(r":[^:]*001 %s :.*"%NAME, msg):
                 send("join %s"%CHAN)
-            elif re.match(r":[^\s]* PRIVMSG %s.*"%CHAN, msg):
+            elif re.match(r":.*![^\s]* PRIVMSG %s.*"%CHAN, msg):
                 rgxp = re.match(r":(?P<nick>[^\s!]*)(![^\s]*)* PRIVMSG %s :(?P<msg>.*)$"%CHAN, msg)
                 if rgxp:
                     response(CHAN, rgxp.group("nick"), rgxp.group("msg"))
-            elif PRIV and re.match(r":[^\s]* PRIVMSG %s.*"%NAME, msg):
+            elif PRIV and re.match(r":.*![^\s]* PRIVMSG %s.*"%NAME, msg):
                 rgxp = re.match(r":(?P<nick>[^\s!]*)(![^\s]*)* PRIVMSG %s :(?P<msg>.*)$"%NAME, msg)
                 if rgxp:
                     response(rgxp.group("nick"), rgxp.group("nick"), NAME+" "+rgxp.group("msg"))
