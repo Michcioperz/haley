@@ -12,11 +12,13 @@ First of all, I'm quite a fan of object-oriented programming. teq's code was alm
 
 Second major difference is how rulesets work. teq's way allows users to add their own rules (that are pretty interesting regexes) directly from the channel or through a private message. My way it's all different. The rules are Python functions that take a Haley object, a string with the message text and a string with the username of the person who said that. The function should return True if it's done something, or False if the command didn't match. So, if we wanted to talk about pancakes whenever they're mentioned:
 
-`@haley.register_filter()
+```python
+@haley.register_filter()
 def pancakes(haley, message, user):
     if "pancakes" in message.lower():
         haley.say(haley.channel, "Pancakes? I love pancakes, %s" % user)
         return True
-    return False`
+    return False
+```
 
 #### More docs soon
