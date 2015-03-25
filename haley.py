@@ -35,6 +35,7 @@ class Haley(threading.Thread):
         for line in message.split("\n"):
             self.send("PRIVMSG %s :%s" % (channel, line))
     def refresh(self):
+        self.filters = []
         execfile("filters.py", {"haley": self})
     def run(self):
         self.refresh()
@@ -57,11 +58,11 @@ class Haley(threading.Thread):
                     self.send("PONG%s" % message[4:])
                 elif message.startswith(":") and ("001 %s :" % self.nickname) in message and "PRIVMSG" not in message.upper():
                     self.send("JOIN %s" % self.channel)
-                elif ("PRIVMSG %s " % self.channel) in message.split(":")[1]:
+                elif (" PRIVMSG %s :" % self.channel) in message:
                     friend = message.split(":")[1].split(" ")[0].split("!")[0]
                     if friend != self.nickname:
                         for fill in self.filters:
-                            if fill[1](self, message.split(":", 2)[2], friend):
+                            if fill[1](self, message.split(" PRIVMSG %s :" % self.channel, 1)[1], friend):
                                 break
 
 if __name__ == "__main__":
