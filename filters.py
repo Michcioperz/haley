@@ -1,7 +1,7 @@
 # enxodimg: utf-8
 from pymarkovchain import MarkovChain
 import os.path, logging
-haley.bff = "Michcioperz"
+haley.bffs = ["Michcioperz","Michcioperz480"]
 with open(os.path.expanduser("~/.haleyay.txt")) as file:
     haley.markov_text = file.read()
 haley.markov_db = MarkovChain(os.path.expanduser("~/.haleyay.db"))
@@ -38,7 +38,7 @@ def marsay(self, message, friend):
 @haley.register_filter()
 def goodbye(self, message, friend):
     if self.nickname in message and "quit" in message.lower() and "please" in message.lower():
-        if friend == self.bff:
+        if friend in self.bffs:
             self.say(self.channel, "Okay, %s, see you later!" % friend)
             self.send("QUIT :Bye!")
             import sys
@@ -52,7 +52,7 @@ def goodbye(self, message, friend):
 def tell(self, message, friend):
     if message.startswith(self.nickname):
         if message.split(" ",1)[1].startswith("tell "):
-            if friend == self.bff:
+            if friend in self.bffs:
                 spl = message.split(" ",3)
                 self.say(self.channel, "%s: %s" % (spl[2], spl[3]))
             else:
@@ -84,7 +84,7 @@ def hello(self, message, friend):
 @haley.register_filter()
 def refresh(self, message, friend):
     if self.nickname in message and "the receiver" in message.lower():
-        if friend == self.bff:
+        if friend in self.bffs:
             self.refresh()
             self.say(self.channel, "Great, %s, but drop by the forge sometimes anyway! :)" % friend) 
         else:
