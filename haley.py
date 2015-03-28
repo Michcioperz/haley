@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-import socket, re, argparse, logging, threading
+import socket, re, argparse, logging, threading, sys, time
 
 LOGLEVEL_RECV = 18
 LOGLEVEL_SENT = 17
@@ -8,6 +8,21 @@ LOGLEVEL_SENT = 17
 logging.addLevelName(LOGLEVEL_RECV, "RECV")
 logging.addLevelName(LOGLEVEL_SENT, "SENT")
 logging.basicConfig(level=15, format='%(asctime)s %(levelname)s %(message)s')
+
+class Magus(object):
+    def __init__(self, haley, func, delta):
+        self.haley = haley
+        self.func = func
+        self.delta = delta
+        self.last = time.time()
+    def update(self):
+        if time.time() - self.last >= self.delta:
+            self.last = time.time()
+            try:
+                self.func(self.haley)
+            except:
+                self.haley.say(self.haley.channel, str(sys.exc_info()[0]))
+
 
 class Haley(threading.Thread):
     def __init__(self, host, port, channel, nickname):
@@ -21,10 +36,16 @@ class Haley(threading.Thread):
         self.nickname = nickname
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.filters = []
+        self.chrono = []
     def register_filter(self, priority=1):
         def func_wrapper(func):
             self.filters.append((priority,func))
             self.filters.sort()
+            return func
+        return func_wrapper
+    def register_chrono(self, delta):
+        def func_wrapper(func):
+            self.chrono.append(Magus(self, func, delta))
             return func
         return func_wrapper
     def send(self, message):
@@ -36,6 +57,7 @@ class Haley(threading.Thread):
             self.send("PRIVMSG %s :%s" % (channel, line))
     def refresh(self):
         self.filters = []
+        self.chrono = []
         execfile("filters.py", {"haley": self})
     def run(self):
         self.refresh()
@@ -62,8 +84,12 @@ class Haley(threading.Thread):
                     friend = message.split(":")[1].split(" ")[0].split("!")[0]
                     if friend != self.nickname:
                         for fill in self.filters:
-                            if fill[1](self, message.split(" PRIVMSG %s :" % self.channel, 1)[1], friend):
-                                break
+                            try:
+                                if fill[1](self, message.split(" PRIVMSG %s :" % self.channel, 1)[1], friend):
+                                    break
+                            except:
+                                self.say(friend, (sys.exc_info()[0]))
+            for cron in self.chrono: cron.update()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simple IRC bot")

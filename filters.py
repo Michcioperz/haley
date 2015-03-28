@@ -1,4 +1,39 @@
+# enxodimg: utf-8
+from pymarkovchain import MarkovChain
+import os.path, logging
 haley.bff = "Michcioperz"
+with open(os.path.expanduser("~/.haleyay.txt")) as file:
+    haley.markov_text = file.read()
+haley.markov_db = MarkovChain(os.path.expanduser("~/.haleyay.db"))
+
+@haley.register_filter(97)
+def marcollect(self, message, friend):
+    self.markov_text += "\n"+message
+    return False
+
+@haley.register_filter()
+def margen(self, message, friend):
+    if self.nickname in message and "regenerate" in message:
+        with open(os.path.expanduser("~/.haleyay.txt"), 'w') as file:
+            file.write(self.markov_text)
+        self.markov_db.generateDatabase(self.markov_text)
+        self.say(self.channel, "Sure")
+        return True
+    return False
+
+@haley.register_chrono(160)
+def marbackup(self): 
+    with open(os.path.expanduser("~/.haleyay.txt"), 'w') as file:
+        file.write(self.markov_text)
+    self.markov_db.generateDatabase(self.markov_text)
+    logging.info("markov db backed up")
+
+@haley.register_filter()
+def marsay(self, message, friend):
+    if self.nickname in message and "say something" in message:
+        self.say(self.channel, self.markov_db.generateString())
+        return True
+    return False
 
 @haley.register_filter()
 def goodbye(self, message, friend):
@@ -41,7 +76,7 @@ def how_are_you(self, message, friend):
 
 @haley.register_filter()
 def hello(self, message, friend):
-    if message == "hi" or (self.nickname in message and "hi" in message):
+    if message == "hi" or (self.nickname in message and " hi " in message):
         self.say(self.channel, "Hello, %s, so it was you making the noise up there!" % friend)
         return True
     return False
