@@ -7,7 +7,7 @@ LOGLEVEL_SENT = 17
 
 logging.addLevelName(LOGLEVEL_RECV, "RECV")
 logging.addLevelName(LOGLEVEL_SENT, "SENT")
-logging.basicConfig(level=15, format='%(asctime)s %(levelname)s %(message)s')
+logging.basicConfig(level=15, filename="haley.log", format='%(asctime)s %(levelname)s %(message)s')
 
 class Magus(object):
     def __init__(self, haley, func, delta):
@@ -50,7 +50,7 @@ class Haley(threading.Thread):
         return func_wrapper
     def send(self, message):
         for line in message.split("\n"):
-            logging.log(LOGLEVEL_SENT, "< %s" % line)
+            logging.log(LOGLEVEL_SENT, "%s" % line)
             self.socket.sendall("%s\r\n" % line)
     def say(self, channel, message):
         for line in message.split("\n"):
@@ -100,3 +100,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     overlord = Haley(args.hostname, args.port, args.channel, args.name)
     overlord.start()
+    while True:
+        try: pass
+        except: sys.exit()
+    
