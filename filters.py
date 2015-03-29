@@ -3,6 +3,7 @@ from pymarkovchain import MarkovChain
 import os.path, logging, re
 haley.bffs = ["Michcioperz","Michcioperz480"]
 haley.mode = False
+haley.send("AWAY :Airi")
 with open(os.path.expanduser("~/.haleyay.txt")) as file:
     haley.markov_text = file.read()
 haley.markov_db = MarkovChain(os.path.expanduser("~/.haleyay.db"))
@@ -12,8 +13,10 @@ def modeswitch(self, message, friend):
     if ("ACTION taps %s's head" % self.nickname) in message:
         if self.mode:
             self.say(self.channel, "Leaving Sister Centipede mode")
+            self.send("AWAY :Airi")
         else:
             self.say(self.channel, "Entering Sister Centipede mode")
+            self.send("AWAY :Sister Centipede")
         self.mode = not self.mode
         return True
     return False

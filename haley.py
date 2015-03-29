@@ -35,8 +35,6 @@ class Haley(threading.Thread):
             self.channel = channel
         self.nickname = nickname
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.filters = []
-        self.chrono = []
     def register_filter(self, priority=1):
         def func_wrapper(func):
             self.filters.append((priority,func))
@@ -60,7 +58,6 @@ class Haley(threading.Thread):
         self.chrono = []
         execfile("filters.py", {"haley": self})
     def run(self):
-        self.refresh()
         self.socket.connect((self.host, self.port))
         buff = ""
         while True:
@@ -80,6 +77,7 @@ class Haley(threading.Thread):
                     self.send("PONG%s" % message[4:])
                 elif message.startswith(":") and ("001 %s :" % self.nickname) in message and "PRIVMSG" not in message.upper():
                     self.send("JOIN %s" % self.channel)
+                    self.refresh()
                 elif (" PRIVMSG %s :" % self.channel) in message:
                     friend = message.split(":")[1].split(" ")[0].split("!")[0]
                     if friend != self.nickname:
@@ -100,7 +98,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     overlord = Haley(args.hostname, args.port, args.channel, args.name)
     overlord.start()
-    while True:
-        try: pass
-        except: sys.exit()
-    
+    overlord.join()
