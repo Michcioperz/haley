@@ -8,14 +8,19 @@ with open(os.path.expanduser("~/.haleyay.txt")) as file:
     haley.markov_text = file.read()
 haley.markov_db = MarkovChain(os.path.expanduser("~/.haleyay.db"))
 
+@haley.register_filter(-100)
+def nofidgot(self, message, friend):
+    if friend == "fidgot" or message.startswith("fidgot"): return True
+    return False
+
 @haley.register_filter()
 def modeswitch(self, message, friend):
     if ("ACTION taps %s's head" % self.nickname) in message:
         if self.mode:
-            self.say(self.channel, "Leaving Sister Centipede mode")
+            self.say(self.channel, "Leaving Sister Centipede mode.")
             self.send("AWAY :Airi")
         else:
-            self.say(self.channel, "Entering Sister Centipede mode")
+            self.say(self.channel, "Entering Sister Centipede mode.")
             self.send("AWAY :Sister Centipede")
         self.mode = not self.mode
         return True
@@ -117,11 +122,11 @@ def hello(self, message, friend):
 def refresh(self, message, friend):
     if self.nickname in message and ((not self.mode and "the receiver" in message.lower()) or (self.mode and "refresh" in message.lower())):
         if friend in self.bffs:
-            self.refresh()
             if self.mode:
-                self.say(self.channel, "Commands assignment refreshed.")
+                self.say(self.channel, "Commands assignment refreshed. Leaving Sister Centipede mode.")
             else:
                 self.say(self.channel, "Great, %s, but drop by the forge sometimes anyway! :)" % friend)
+            self.refresh()
         else:
             if self.mode:
                 self.say(self.channel, "Insufficent privileges.")

@@ -35,6 +35,8 @@ class Haley(threading.Thread):
             self.channel = channel
         self.nickname = nickname
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.chrono = []
+        self.filters = []
     def register_filter(self, priority=1):
         def func_wrapper(func):
             self.filters.append((priority,func))
