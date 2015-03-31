@@ -1,6 +1,6 @@
 # enxodimg: utf-8
 from pymarkovchain import MarkovChain
-import os.path, logging, re
+import os.path, logging, re, mpd
 haley.bffs = ["Michcioperz","Michcioperz480"]
 haley.mode = False
 haley.send("AWAY :Airi")
@@ -11,6 +11,39 @@ haley.markov_db = MarkovChain(os.path.expanduser("~/.haleyay.db"))
 @haley.register_filter(-100)
 def nofidgot(self, message, friend):
     if friend == "fidgot" or message.startswith("fidgot"): return True
+    return False
+
+def mpc():
+    mpc = mpd.MPDClient()
+    mpc.connect("127.0.0.1", 6600)
+    return mpc
+
+def mpdsong(self, c=None):
+    d = None
+    if c is None:
+        d = mpc()
+    else:
+        d = c
+    song = d.currentsong()
+    if c is None:
+        d.disconnect()
+    self.say(self.channel, '%s by %s from %s' % (song.get("title", "no title"), song.get("artist", "no title"), song.get("album", "no album")))
+
+@haley.register_filter()
+def cursong(self, message, friend):
+    if self.nickname in message and "current" in message.lower() and ("playing" in message.lower() or "song" in message.lower() or "track" in message.lower()):
+        mpdsong(self)
+        return True
+    return False
+
+@haley.register_filter()
+def nextsong(self, message, friend):
+    if self.nickname in message and "next" in message.lower() and ("song" in message.lower() or "track" in message.lower()):
+        c = mpc()
+        c.next()
+        mpdsong(self, c)
+        c.disconnect()
+        return True
     return False
 
 @haley.register_filter()
