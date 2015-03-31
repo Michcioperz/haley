@@ -100,4 +100,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     overlord = Haley(args.hostname, args.port, args.channel, args.name)
     overlord.start()
-    overlord.join()
+    try:
+        overlord.join()
+    except KeyboardInterrupt: sys.exit()

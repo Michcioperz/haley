@@ -3,6 +3,7 @@ from pymarkovchain import MarkovChain
 import os.path, logging, re, mpd
 haley.bffs = ["Michcioperz","Michcioperz480"]
 haley.mode = False
+haley.song = None
 haley.send("AWAY :Airi")
 with open(os.path.expanduser("~/.haleyay.txt")) as file:
     haley.markov_text = file.read()
@@ -24,10 +25,10 @@ def mpdsong(self, c=None):
         d = mpc()
     else:
         d = c
-    song = d.currentsong()
+    self.song = d.currentsong()
     if c is None:
         d.disconnect()
-    self.say(self.channel, '%s by %s from %s' % (song.get("title", "no title"), song.get("artist", "no title"), song.get("album", "no album")))
+    self.say(self.channel, '%s by %s from %s' % (self.song.get("title", "no title"), self.song.get("artist", "no title"), self.song.get("album", "no album")))
 
 @haley.register_filter()
 def cursong(self, message, friend):
@@ -35,6 +36,14 @@ def cursong(self, message, friend):
         mpdsong(self)
         return True
     return False
+
+@haley.register_chrono(60)
+def songcheck(self):
+    c = mpc()
+    if self.song != c.currentsong():
+        self.song = c.currentsong()
+        mpdsong(self, c)
+    c.disconnect()
 
 @haley.register_filter()
 def nextsong(self, message, friend):
