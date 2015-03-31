@@ -88,7 +88,7 @@ class Haley(threading.Thread):
                                 if fill[1](self, message.split(" PRIVMSG %s :" % self.channel, 1)[1], friend):
                                     break
                             except:
-                                self.say(friend, (sys.exc_info()[0]))
+                                self.say(friend, str(sys.exc_info()[0]))
             for cron in self.chrono: cron.update()
 
 if __name__ == "__main__":
