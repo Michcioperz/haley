@@ -6,7 +6,7 @@ haley.bffs = ["Michcioperz","Michcioperz480"]
 haley.mode = False
 haley.song = None
 haley.send("AWAY :Airi")
-with open(os.path.expanduser("~/.haleyay.txt")) as file:
+with open(os.path.expanduser("~/.haleyay.txt")) as f:
     haley.markov_text = file.read()
 haley.markov_db = MarkovChain(os.path.expanduser("~/.haleyay.db"))
 
@@ -77,7 +77,7 @@ def marcollect(self, message, friend):
 @haley.register_filter()
 def margen(self, message, friend):
     if self.nickname in message and self.mode and "markov regenerate" in message:
-        with open(os.path.expanduser("~/.haleyay.txt"), 'w') as file:
+        with open(os.path.expanduser("~/.haleyay.txt"), 'w') as f:
             file.write(self.markov_text)
         self.markov_db.generateDatabase(self.markov_text)
         if self.mode:
@@ -89,7 +89,7 @@ def margen(self, message, friend):
 
 @haley.register_chrono(160)
 def marbackup(self): 
-    with open(os.path.expanduser("~/.haleyay.txt"), 'w') as file:
+    with open(os.path.expanduser("~/.haleyay.txt"), 'w') as f:
         file.write(self.markov_text)
     self.markov_db.generateDatabase(self.markov_text)
     logging.info("markov db backed up")
