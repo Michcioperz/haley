@@ -1,6 +1,7 @@
-# enxodimg: utf-8
+# encoding: utf-8
 from pymarkovchain import MarkovChain
 import os.path, logging, re, mpd
+haley = haley
 haley.bffs = ["Michcioperz","Michcioperz480"]
 haley.mode = False
 haley.song = None
