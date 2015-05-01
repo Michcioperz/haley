@@ -49,7 +49,7 @@ def margen(self, message, friend):
 @haley.register_chrono(160)
 def marbackup(self): 
     with open(os.path.expanduser("~/.haleyay.txt"), 'w') as f:
-        file.write(self.markov_text)
+        f.write(self.markov_text)
     self.markov_db.generateDatabase(self.markov_text)
     logging.info("markov db backed up")
 
