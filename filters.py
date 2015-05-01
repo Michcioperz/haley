@@ -1,6 +1,6 @@
 # enxodimg: utf-8
 from pymarkovchain import MarkovChain
-import os.path, logging, re, mpd
+import os.path, logging, re, random
 haley.bffs = ["Michcioperz","Michcioperz480"]
 haley.mode = False
 haley.song = None
@@ -12,47 +12,6 @@ haley.markov_db = MarkovChain(os.path.expanduser("~/.haleyay.db"))
 @haley.register_filter(-100)
 def nofidgot(self, message, friend):
     if friend == "fidgot" or message.startswith("fidgot"): return True
-    return False
-
-def mpc():
-    mpc = mpd.MPDClient()
-    mpc.connect("127.0.0.1", 6600)
-    return mpc
-
-def mpdsong(self, c=None):
-    d = None
-    if c is None:
-        d = mpc()
-    else:
-        d = c
-    self.song = d.currentsong()
-    if c is None:
-        d.disconnect()
-    self.say(self.channel, '%s by %s from %s' % (self.song.get("title", "no title"), self.song.get("artist", "no title"), self.song.get("album", "no album")))
-
-@haley.register_filter()
-def cursong(self, message, friend):
-    if self.nickname in message and "current" in message.lower() and ("playing" in message.lower() or "song" in message.lower() or "track" in message.lower()):
-        mpdsong(self)
-        return True
-    return False
-
-@haley.register_chrono(60)
-def songcheck(self):
-    c = mpc()
-    if self.song != c.currentsong():
-        self.song = c.currentsong()
-        mpdsong(self, c)
-    c.disconnect()
-
-@haley.register_filter()
-def nextsong(self, message, friend):
-    if self.nickname in message and "next" in message.lower() and ("song" in message.lower() or "track" in message.lower()):
-        c = mpc()
-        c.next()
-        mpdsong(self, c)
-        c.disconnect()
-        return True
     return False
 
 @haley.register_filter()
@@ -155,8 +114,8 @@ def how_are_you(self, message, friend):
 
 @haley.register_filter()
 def hello(self, message, friend):
-    if not self.mode and message == "hi" or (self.nickname in message and " hi " in message):
-        self.say(self.channel, "Hello, %s, so it was you making the noise up there!" % friend)
+    if not self.mode and message.lower() == "hi" or (self.nickname in message and "hi" in message.lower().split()):
+        self.say(self.channel, random.choice(["%s! Tutturuuu!","Hello, %s, so it was you making the noise up there!"]) % friend)
         return True
     return False
 
@@ -177,6 +136,16 @@ def refresh(self, message, friend):
         return True
     return False
 
+@haley.register_filter()
+def nanon(self, message, friend):
+    if "nano" in message.lower() or "hakase" in message.lower():
+        if "nano" in message.lower():
+            self.say(self.channel, "HAKASE"*len(re.findall("nano", message.lower())))
+        if "hakase" in message.lower():
+            self.say(self.channel, "NANO"*len(re.findall("hakase", message.lower())))
+        return True
+    return False
+
 @haley.register_filter(99)
 def not_understand(self, message, friend):
     if self.nickname in message:
@@ -184,12 +153,5 @@ def not_understand(self, message, friend):
             self.say(self.channel, "Command not understood.")
         else:
             self.say(self.channel, "Hey, %s, I didn't quite get what you mean?" % friend)
-        return True
-    return False
-
-@haley.register_filter(3)
-def multeq(self, message, friend):
-    if not self.mode and self.nickname in message and "multi" in message and "teqwve" in message:
-        self.say(self.channel, "%s, heard you talking about teq's photos, right? http://ijestfajnie.pl/bin/i3 http://ijestfajnie.pl/bin/i4" % friend)
         return True
     return False
