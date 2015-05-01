@@ -7,7 +7,7 @@ haley.mode = False
 haley.song = None
 haley.send("AWAY :Airi")
 with open(os.path.expanduser("~/.haleyay.txt")) as f:
-    haley.markov_text = file.read()
+    haley.markov_text = f.read()
 haley.markov_db = MarkovChain(os.path.expanduser("~/.haleyay.db"))
 
 @haley.register_filter(-100)
@@ -153,6 +153,6 @@ def not_understand(self, message, friend):
         if self.mode:
             self.say(self.channel, "Command not understood.")
         else:
-            self.say(self.channel, "Hey, %s, I didn't quite get what you mean?" % friend)
+            self.say(self.channel, random.choice(["Yes, it's me. The Organization's feeding me phony data through %s. El Psy Kongroo.","Hey, %s, I didn't quite get what you mean?"]) % friend)
         return True
     return False
