@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-import socket, re, argparse, logging, threading, sys, time
+import socket, argparse, logging, threading, sys, time
 
 LOGLEVEL_RECV = 18
 LOGLEVEL_SENT = 17
@@ -50,7 +50,7 @@ class Haley(threading.Thread):
         return func_wrapper
     def send(self, message):
         for line in message.split("\n"):
-            logging.log(LOGLEVEL_SENT, "%s" % line)
+            logging.log(LOGLEVEL_SENT, "%s", line)
             self.socket.sendall("%s\r\n" % line)
     def say(self, channel, message):
         for line in message.split("\n"):
